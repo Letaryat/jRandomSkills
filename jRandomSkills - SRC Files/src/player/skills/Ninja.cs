@@ -31,7 +31,7 @@ namespace jRandomSkills
             Instance.RegisterEventHandler<EventPlayerDeath>((@event, info) =>
             {
                 var player = @event.Userid;
-                if (!player.IsValid || player.PlayerPawn.Value == null) return HookResult.Continue;
+                if (player == null || !player.IsValid || player.PlayerPawn.Value == null) return HookResult.Continue;
 
                 var playerInfo = Instance.skillPlayer.FirstOrDefault(p => p.SteamID == player.SteamID);
                 if (playerInfo?.Skill == skillName)
@@ -72,9 +72,19 @@ namespace jRandomSkills
 
         private static void UpdateNinja(CCSPlayerController player)
         {
-            var flags = (PlayerFlags)player.PlayerPawn.Value.Flags;
+            if (player == null || !player.IsValid) return;
+
+            var pawn = player.PlayerPawn?.Value;
+            if (pawn == null || !pawn.IsValid) return;
+            var flags = (PlayerFlags)pawn.Flags;
             var buttons = player.Buttons;
-            var activeWeapon = player.PlayerPawn.Value.WeaponServices.ActiveWeapon.Value;
+
+            if (pawn.WeaponServices == null) return;
+
+            var activeWeapon = pawn.WeaponServices.ActiveWeapon.Value;
+
+            if (activeWeapon == null) return;
+
             float percentInvisibility = 0;
 
             if (buttons.HasFlag(PlayerButtons.Duck))
@@ -109,9 +119,15 @@ namespace jRandomSkills
             if (!Instance.IsPlayerValid(player)) return;
             var playerPawn = player.PlayerPawn.Value;
 
+            if (playerPawn == null || !playerPawn.IsValid) return;
+
             var color = Color.FromArgb(Math.Max(255 - (int)(255 * percentInvisibility * 2), 0), 255, 255, 255);
 
-            foreach (var weapon in playerPawn.WeaponServices?.MyWeapons)
+            var weaponServices = playerPawn.WeaponServices;
+
+            if (weaponServices == null) return;
+
+            foreach (var weapon in weaponServices.MyWeapons)
             {
                 if (weapon != null && weapon.IsValid && weapon.Value != null && weapon.Value.IsValid)
                 {
